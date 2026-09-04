@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
-@theme inline {
+:root,
+html[data-theme='dark'] {
   --color-bg: #070b12;
   --color-surface: #0d1420;
   --color-surface-2: #131b2b;
@@ -13,10 +14,27 @@
   --color-accent-dim: color-mix(in srgb, #4da3ff 16%, transparent);
   --color-fence: #c4a5ff;
   --color-on-accent: #071018;
+}
+
+html[data-theme='light'] {
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef1f4;
+  --color-border: #d8dee4;
+  --color-border-2: #afb8c1;
+  --color-text: #1f2328;
+  --color-muted: #59636e;
+  --color-accent: #0969da;
+  --color-accent-hover: #0550ae;
+  --color-accent-dim: color-mix(in srgb, #0969da 12%, transparent);
+  --color-fence: #656d76;
+  --color-on-accent: #ffffff;
+}
+
+@theme inline {
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
-  /* GitHub-like neutral stack for markdown WYSIWYG */
   --font-md: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial,
     sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
 }
@@ -53,6 +71,62 @@ body {
 
 /* ProseMirror WYSIWYG — homepage-style live markdown formatting */
 .lf-pm-shell {
+  background: var(--color-surface);
+}
+
+.lf-raw-editor {
+  background: var(--color-surface);
+  width: 100%;
+}
+
+.lf-split-handle {
+  position: relative;
+  flex: 0 0 5px;
+  width: 5px;
+  cursor: col-resize;
+  background: transparent;
+  touch-action: none;
+  transition: background 0.15s ease;
+}
+
+.lf-split-handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+}
+
+.lf-split-handle:hover,
+.lf-split-handle:focus-visible {
+  background: transparent;
+  outline: none;
+}
+
+.lf-split-handle.is-dragging {
+  background: var(--color-accent);
+  outline: none;
+}
+
+.lf-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-muted);
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.lf-theme-toggle:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
   background: var(--color-surface);
 }
 
@@ -170,16 +244,36 @@ body {
 
 .lf-pm-host .ProseMirror ul,
 .lf-pm-host .ProseMirror ol {
-  padding-left: 1.35rem;
+  padding-left: 1.5rem;
   margin: 0.45rem 0;
+  list-style-position: outside;
+}
+
+.lf-pm-host .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.lf-pm-host .ProseMirror ol {
+  list-style-type: decimal;
 }
 
 .lf-pm-host .ProseMirror li {
+  display: list-item;
   margin: 0.2rem 0;
 }
 
 .lf-pm-host .ProseMirror li > p {
   margin: 0.15rem 0;
+}
+
+.lf-pm-host .ProseMirror ul ul,
+.lf-pm-host .ProseMirror ol ul {
+  list-style-type: circle;
+}
+
+.lf-pm-host .ProseMirror ul ul ul,
+.lf-pm-host .ProseMirror ol ul ul {
+  list-style-type: square;
 }
 
 .lf-pm-host .ProseMirror img {
@@ -207,10 +301,69 @@ body {
   font-family: var(--font-mono);
   font-size: 0.85rem;
   line-height: 1.7;
-  color: var(--color-fence);
+  color: var(--color-muted);
   background: transparent;
   border: none;
   border-radius: 0;
+}
+
+/* Full-bleed bands: edge to edge, no gaps between adjacent sections */
+.lf-pm-host .ProseMirror .lf-section-tone {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  border-radius: 0;
+}
+
+.lf-pm-host .ProseMirror h1.lf-section-tone,
+.lf-pm-host .ProseMirror h2.lf-section-tone {
+  padding-top: 0.55rem;
+  padding-bottom: 0.35rem;
+}
+
+.lf-pm-host .ProseMirror h3.lf-section-tone,
+.lf-pm-host .ProseMirror h4.lf-section-tone,
+.lf-pm-host .ProseMirror h5.lf-section-tone,
+.lf-pm-host .ProseMirror h6.lf-section-tone {
+  padding-top: 0.45rem;
+  padding-bottom: 0.25rem;
+}
+
+.lf-pm-host .ProseMirror p.lf-section-tone,
+.lf-pm-host .ProseMirror .lf-fence-node.lf-section-tone {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+/* Dark mode: subtle dark alternating bands */
+html[data-theme='dark'] .lf-pm-host .ProseMirror .lf-section-tone-a {
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface-2));
+}
+
+html[data-theme='dark'] .lf-pm-host .ProseMirror .lf-section-tone-b {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-2));
+}
+
+/* Light mode: alternating white / light-gray section bands */
+html[data-theme='light'] .lf-pm-host .ProseMirror .lf-section-tone-a {
+  background: #ffffff;
+}
+
+html[data-theme='light'] .lf-pm-host .ProseMirror .lf-section-tone-b {
+  background: #f6f7f9;
+}
+
+.lf-pm-host .ProseMirror .lf-section-start {
+  padding-top: 0.55rem;
+}
+
+.lf-pm-host .ProseMirror .lf-section-end {
+  padding-bottom: 0.55rem;
 }
 
 /* Hide example-setup menu chrome if CSS still loads */

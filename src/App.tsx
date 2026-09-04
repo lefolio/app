@@ -1,10 +1,28 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DropZone } from '@/components/DropZone';
 import { MarkdownEditor } from '@/components/MarkdownEditor';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { DEFAULT_AGENT_PROMPT, STARTER_HOME_MD } from '@/lib/starter';
 import type { DroppedItem } from '@/lib/types';
 
 type SendState = 'idle' | 'sending' | 'sent';
+
+const MIN_LEFT = 360;
+const MIN_RIGHT = 280;
+const DEFAULT_RIGHT_RATIO = 0.32;
+const STORAGE_KEY = 'lefolio.app.split.rightRatio';
+
+function loadRightRatio() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_RIGHT_RATIO;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return DEFAULT_RIGHT_RATIO;
+    return Math.min(0.55, Math.max(0.2, value));
+  } catch {
+    return DEFAULT_RIGHT_RATIO;
+  }
+}
 
 export default function App() {
   const [markdown, setMarkdown] = useState(STARTER_HOME_MD);
@@ -14,11 +32,14 @@ export default function App() {
   const [refs, setRefs] = useState<DroppedItem[]>([]);
   const [prompt, setPrompt] = useState(DEFAULT_AGENT_PROMPT);
   const [sendState, setSendState] = useState<SendState>('idle');
+  const [rightRatio, setRightRatio] = useState(loadRightRatio);
+  const [dragging, setDragging] = useState(false);
+
+  const splitRef = useRef<HTMLDivElement>(null);
 
   const handleSend = () => {
     if (sendState !== 'idle') return;
     setSendState('sending');
-    // Prototype: package is ready for a real agent bridge (clipboard / MCP / IDE).
     const payload = {
       file: 'Home.md',
       markdown,
@@ -33,14 +54,61 @@ export default function App() {
     }, 900);
   };
 
+  const onPointerMove = useCallback((event: PointerEvent) => {
+    const root = splitRef.current;
+    if (!root) return;
+    const rect = root.getBoundingClientRect();
+    const width = rect.width;
+    if (width <= 0) return;
+
+    let rightWidth = rect.right - event.clientX;
+    rightWidth = Math.min(width - MIN_LEFT, Math.max(MIN_RIGHT, rightWidth));
+    const next = rightWidth / width;
+    setRightRatio(next);
+  }, []);
+
+  const stopDragging = useCallback(() => {
+    setDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (!dragging) return;
+
+    const onUp = () => stopDragging();
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [dragging, onPointerMove, stopDragging]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(rightRatio));
+    } catch {
+      // ignore
+    }
+  }, [rightRatio]);
+
+  const rightPercent = `${(rightRatio * 100).toFixed(2)}%`;
+  const leftPercent = `${((1 - rightRatio) * 100).toFixed(2)}%`;
+
   return (
     <div className="flex h-full flex-col" style={{ background: 'var(--color-bg)' }}>
-      <div className="flex min-h-0 flex-1">
+      <div ref={splitRef} className="flex min-h-0 flex-1">
         <div
-          className="flex flex-col border-r"
+          className="flex min-w-0 flex-col"
           style={{
-            flex: '0 0 55%',
-            borderColor: 'var(--color-border)',
+            flex: `0 0 ${leftPercent}`,
+            width: leftPercent,
             background: 'var(--color-surface)',
           }}
         >
@@ -48,16 +116,49 @@ export default function App() {
         </div>
 
         <div
-          className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5"
-          style={{ background: 'var(--color-bg)' }}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize panels"
+          aria-valuemin={20}
+          aria-valuemax={55}
+          aria-valuenow={Math.round(rightRatio * 100)}
+          tabIndex={0}
+          className={`lf-split-handle${dragging ? ' is-dragging' : ''}`}
+          onPointerDown={(event) => {
+            event.preventDefault();
+            (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+            setDragging(true);
+          }}
+          onKeyDown={(event) => {
+            const step = event.shiftKey ? 0.04 : 0.015;
+            if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              setRightRatio((r) => Math.min(0.55, r + step));
+            } else if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              setRightRatio((r) => Math.max(0.2, r - step));
+            }
+          }}
+        />
+
+        <div
+          className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto p-5"
+          style={{
+            flex: `0 0 ${rightPercent}`,
+            width: rightPercent,
+            background: 'var(--color-bg)',
+          }}
         >
           <div>
-            <label
-              className="mb-2 block text-xs font-medium tracking-widest uppercase"
-              style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
-            >
-              Contex
-            </label>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label
+                className="block text-xs font-medium tracking-widest uppercase"
+                style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
+              >
+                Contex
+              </label>
+              <ThemeToggle />
+            </div>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
