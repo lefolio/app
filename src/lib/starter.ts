@@ -2,9 +2,8 @@ export const STARTER_HOME_MD = `::: hero
 # My Brand
 ## We build stuff that we care about
 
-![Hero image](Assets/hero-image.png)
-
 [Buy our stuff](/our-stuff)
+
 [Learn more about us](/about-us)
 :::
 
@@ -13,7 +12,6 @@ export const STARTER_HOME_MD = `::: hero
 
 Carefully crafting products and services for a decade with a passion for details.
 
-![Side image](Assets/about-image.png)
 :::
 
 ::: testimonials
