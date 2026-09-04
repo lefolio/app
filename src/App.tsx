@@ -8,6 +8,9 @@ type SendState = 'idle' | 'sending' | 'sent';
 
 export default function App() {
   const [markdown, setMarkdown] = useState(STARTER_HOME_MD);
+  const [context, setContext] = useState(
+    'This home page is for a service business with a decade of experience, it values trust and partnership, the style should be clean and professional but also warm.',
+  );
   const [refs, setRefs] = useState<DroppedItem[]>([]);
   const [prompt, setPrompt] = useState(DEFAULT_AGENT_PROMPT);
   const [sendState, setSendState] = useState<SendState>('idle');
@@ -19,6 +22,7 @@ export default function App() {
     const payload = {
       file: 'Home.md',
       markdown,
+      context,
       references: refs.map(({ name, type, url }) => ({ name, type, url })),
       prompt,
     };
@@ -31,58 +35,6 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col" style={{ background: 'var(--color-bg)' }}>
-      <header
-        className="flex shrink-0 items-center justify-between border-b px-5 py-3"
-        style={{ borderColor: 'var(--color-border)' }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-7 w-7 items-center justify-center rounded-md"
-            style={{ background: 'var(--color-accent)' }}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--color-on-accent)"
-              strokeWidth="2.5"
-            >
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
-          </div>
-          <div>
-            <div
-              className="text-sm font-semibold tracking-tight"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text)' }}
-            >
-              lefolio.app
-            </div>
-            <div
-              className="text-[11px]"
-              style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
-            >
-              draft Home.md → coding agent
-            </div>
-          </div>
-        </div>
-        <a
-          href="https://lefolio.md"
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-md border px-2.5 py-1 text-xs transition-colors"
-          style={{
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--color-muted)',
-            borderColor: 'var(--color-border)',
-            background: 'var(--color-surface)',
-          }}
-        >
-          lefolio.md
-        </a>
-      </header>
-
       <div className="flex min-h-0 flex-1">
         <div
           className="flex flex-col border-r"
@@ -104,6 +56,36 @@ export default function App() {
               className="mb-2 block text-xs font-medium tracking-widest uppercase"
               style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
             >
+              Contex
+            </label>
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder="Write some context about your site and business..."
+              className="min-h-[100px] w-full resize-none rounded-xl p-4 outline-none transition-all duration-200"
+              style={{
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 13,
+                lineHeight: 1.65,
+                caretColor: 'var(--color-accent)',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border-2)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border)';
+              }}
+            />
+          </div>
+
+          <div>
+            <label
+              className="mb-2 block text-xs font-medium tracking-widest uppercase"
+              style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
+            >
               References
             </label>
             <DropZone
@@ -118,12 +100,12 @@ export default function App() {
               className="mb-2 block text-xs font-medium tracking-widest uppercase"
               style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
             >
-              Agent prompt
+              Prompt
             </label>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Add instructions for your coding agent…"
+              placeholder="Write the prompt for your coding agent…"
               className="min-h-[160px] flex-1 resize-none rounded-xl p-4 outline-none transition-all duration-200"
               style={{
                 background: 'var(--color-surface)',
@@ -219,25 +201,6 @@ export default function App() {
                 </>
               )}
             </button>
-
-            {sendState === 'sent' ? (
-              <p
-                className="mt-2 text-center text-xs"
-                style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
-              >
-                {refs.length > 0
-                  ? `${refs.length} reference${refs.length > 1 ? 's' : ''} + `
-                  : ''}
-                Home.md draft copied as JSON package
-              </p>
-            ) : (
-              <p
-                className="mt-2 text-center text-xs"
-                style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
-              >
-                Uses lefolio ::: component syntax · ink-dark preview
-              </p>
-            )}
           </div>
         </div>
       </div>

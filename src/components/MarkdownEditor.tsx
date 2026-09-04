@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { renderLefolioPreview } from '@/lib/preview';
+import { renderMarkdownPreview } from '@/lib/preview';
 
 export function MarkdownEditor({
   value,
@@ -85,7 +85,7 @@ export function MarkdownEditor({
         ) : (
           <div
             className="prose-md flex-1 overflow-y-auto px-5 py-5"
-            dangerouslySetInnerHTML={{ __html: renderLefolioPreview(value) }}
+            dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(value) }}
           />
         )}
       </div>

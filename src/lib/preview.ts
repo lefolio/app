@@ -17,7 +17,8 @@ function inlineMarkdown(text: string) {
     );
 }
 
-function renderLooseMarkdown(md: string) {
+/** Plain markdown preview (headings, lists, links, images, emphasis). */
+export function renderMarkdownPreview(md: string) {
   const lines = md.split('\n');
   const html: string[] = [];
   let listOpen = false;
@@ -42,6 +43,13 @@ function renderLooseMarkdown(md: string) {
       html.push(
         `<img class="md-img" src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1])}" />`,
       );
+      continue;
+    }
+
+    // Keep ::: fences visible as plain text lines in preview.
+    if (/^:::/.test(line.trim())) {
+      closeList();
+      html.push(`<p class="md-fence">${inlineMarkdown(line.trim())}</p>`);
       continue;
     }
 
@@ -75,109 +83,4 @@ function renderLooseMarkdown(md: string) {
 
   closeList();
   return html.join('\n');
-}
-
-function renderHero(body: string) {
-  const links = [...body.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)];
-  const withoutLinks = body.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '');
-  const ctas = links
-    .map((match, index) => {
-      const cls = index === 0 ? 'lf-cta lf-cta-primary' : 'lf-cta lf-cta-secondary';
-      return `<a class="${cls}" href="${escapeHtml(match[2])}">${escapeHtml(match[1])}</a>`;
-    })
-    .join('');
-
-  return `
-    <section class="lf-block lf-block-hero">
-      <span class="block-chip">::: hero</span>
-      ${renderLooseMarkdown(withoutLinks)}
-      ${ctas ? `<div class="lf-cta-row">${ctas}</div>` : ''}
-    </section>
-  `;
-}
-
-function renderAbout(body: string) {
-  const image = body.match(/!\[([^\]]*)\]\(([^)]+)\)/);
-  const text = body.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '').trim();
-  return `
-    <section class="lf-block">
-      <span class="block-chip">::: about</span>
-      <div class="lf-about">
-        <div>${renderLooseMarkdown(text)}</div>
-        ${
-          image
-            ? `<img class="md-img" src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1])}" />`
-            : ''
-        }
-      </div>
-    </section>
-  `;
-}
-
-function renderTestimonials(body: string) {
-  const chunks = body
-    .split(/^## /gm)
-    .map((chunk) => chunk.trim())
-    .filter(Boolean);
-
-  const cards = chunks
-    .map((chunk) => {
-      const lines = chunk.split('\n');
-      const name = lines[0]?.trim() ?? 'Customer';
-      const rest = lines.slice(1).join('\n');
-      const roleMatch = rest.match(/^### (.+)$/m);
-      const role = roleMatch?.[1] ?? '';
-      const quote = rest.replace(/^### .+$/m, '').trim();
-      return `
-        <article class="lf-quote">
-          <h2 class="md-h2">${inlineMarkdown(name)}</h2>
-          ${role ? `<h3 class="md-h3">${inlineMarkdown(role)}</h3>` : ''}
-          <p>${inlineMarkdown(quote)}</p>
-        </article>
-      `;
-    })
-    .join('');
-
-  return `
-    <section class="lf-block">
-      <span class="block-chip">::: testimonials</span>
-      <div class="lf-testimonials">${cards}</div>
-    </section>
-  `;
-}
-
-function renderGenericBlock(name: string, body: string) {
-  return `
-    <section class="lf-block">
-      <span class="block-chip">::: ${escapeHtml(name)}</span>
-      ${renderLooseMarkdown(body)}
-    </section>
-  `;
-}
-
-/** Preview renderer that understands lefolio ::: component fences. */
-export function renderLefolioPreview(markdown: string) {
-  const fence = /^::: *([a-z0-9_-]+)[^\n]*\n([\s\S]*?)^:::/gm;
-  let html = '';
-  let cursor = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = fence.exec(markdown)) !== null) {
-    const before = markdown.slice(cursor, match.index).trim();
-    if (before) html += renderLooseMarkdown(before);
-
-    const name = match[1].toLowerCase();
-    const body = match[2].trim();
-    if (name === 'hero') html += renderHero(body);
-    else if (name === 'about') html += renderAbout(body);
-    else if (name === 'testimonials') html += renderTestimonials(body);
-    else html += renderGenericBlock(name, body);
-
-    cursor = match.index + match[0].length;
-  }
-
-  const after = markdown.slice(cursor).trim();
-  if (after) html += renderLooseMarkdown(after);
-  if (!html) html = renderLooseMarkdown(markdown);
-  return html;
 }

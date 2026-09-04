@@ -21,6 +21,10 @@ npm run dev
 npm run build
 ```
 
-## Starter draft
+## Deploy
 
-The editor opens with a sample `Home.md` using `::: hero`, `::: about`, and `::: testimonials` blocks — the same structure lefolio templates consume.
+GitHub Pages (project site): [https://lefolio.github.io/app/](https://lefolio.github.io/app/)
+
+Push to `main` / `master` runs `.github/workflows/deploy.yml` (`VITE_BASE=/app/`).
+
+Agent handoff design notes live in the Academic wiki: `wiki/lefolio/Design/agent_handoff.md`.

@@ -29,7 +29,5 @@ X really helped us create the client relationship we wanted.
 
 export const DEFAULT_AGENT_PROMPT = `Build a lefolio.md site from this Home.md draft.
 
-Use the ::: component blocks (hero, about, testimonials) as structured content.
-Match the ink-dark showcase style from lefolio.md.
-Create React components that parse each block and render the page.
-Keep content editable as markdown.`;
+Use the ::: component blocks as structured content.
+Create React components that parse each block and render the page.`;
